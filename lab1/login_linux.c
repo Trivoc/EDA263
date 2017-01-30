@@ -63,10 +63,13 @@ int main(int argc, char *argv[]) {
 		passwddata = mygetpwnam(user);
 
 		if (passwddata != NULL) {
-			/* You have to encrypt user_pass for this to work */
-			/* Don't forget to include the salt */
 
-			if (!strcmp(crypt(user_pass, passwddata->passwd_salt), passwddata->passwd)) {
+			/* Locks login attempts indefinitely after 5 failed attempts. 
+			Also, you have to encrypt user_pass for this to work.
+			Don't forget to include the salt */
+			if(passwddata->pwfailed > 5){
+				printf("More than 10 unsuccessful logins: account locked.");
+			} else if (!strcmp(crypt(user_pass, passwddata->passwd_salt), passwddata->passwd)) {
 				if (passwddata->pwfailed > 0) {
 					printf("Number of unsuccessful login attempts: %d\n", passwddata->pwfailed);
 				}
@@ -74,7 +77,14 @@ int main(int argc, char *argv[]) {
 				passwddata->pwage++;
 
 				printf(" You're in !\n");
+				char* const empty[]= {};
+				char* const empty2[] = {};
+				if(seteuid(passwddata->uid) == -1){
+					perror("SetUID error");
+				}
 
+				execve("/bin/sh", NULL, NULL);
+				perror("Durr");
 				/*  check UID, see setuid(2) */
 				/*  start a shell, use execve(2) */
 
@@ -88,4 +98,6 @@ int main(int argc, char *argv[]) {
 	}
 	return 0;
 }
+
+
 
