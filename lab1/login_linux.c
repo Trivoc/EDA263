@@ -67,13 +67,22 @@ int main(int argc, char *argv[]) {
 			/* Don't forget to include the salt */
 
 			if (!strcmp(user_pass, passwddata->passwd)) {
+				if (passwddata->pwfailed > 0) {
+					printf("Number of unsuccessful login attempts: %d\n", passwddata->pwfailed);
+				}
+				passwddata->pwfailed = 0;
+				passwddata->pwage++;
 
 				printf(" You're in !\n");
 
 				/*  check UID, see setuid(2) */
 				/*  start a shell, use execve(2) */
 
+			} else {
+				passwddata->pwfailed++;
 			}
+
+			mysetpwent(user, passwddata);
 		}
 		printf("Login Incorrect \n");
 	}
