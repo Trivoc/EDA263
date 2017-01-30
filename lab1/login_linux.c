@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 			/* You have to encrypt user_pass for this to work */
 			/* Don't forget to include the salt */
 
-			if (!strcmp(user_pass, passwddata->passwd)) {
+			if (!strcmp(crypt(user_pass, passwddata->passwd_salt), passwddata->passwd)) {
 				if (passwddata->pwfailed > 0) {
 					printf("Number of unsuccessful login attempts: %d\n", passwddata->pwfailed);
 				}
