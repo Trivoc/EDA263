@@ -18,10 +18,17 @@
 #define FALSE 0
 #define LENGTH 16
 
-void sighandler() {
+void noop(int sign) {}
 
-	/* add signalhandling routines here */
-	/* see 'man 2 signal' */
+void intercept_signal(int sign, void(*function) (int)) {
+	struct sigaction act;
+	act.sa_handler = function;
+	sigaction(sign, &act, NULL);
+}
+
+void sighandler() {
+	intercept_signal(SIGINT, &noop);
+	intercept_signal(SIGTERM, &noop);
 }
 
 int main(int argc, char *argv[]) {
@@ -64,7 +71,7 @@ int main(int argc, char *argv[]) {
 
 		if (passwddata != NULL) {
 
-			/* Locks login attempts indefinitely after 5 failed attempts. 
+			/* Locks login attempts indefinitely after 5 failed attempts.
 			Also, you have to encrypt user_pass for this to work.
 			Don't forget to include the salt */
 			if(passwddata->pwfailed > 5){
@@ -77,17 +84,13 @@ int main(int argc, char *argv[]) {
 				passwddata->pwage++;
 
 				printf(" You're in !\n");
-				char* const empty[]= {};
-				char* const empty2[] = {};
-				if(seteuid(passwddata->uid) == -1){
-					perror("SetUID error");
+				if (setuid(passwddata->uid) == -1) {
+					perror("setuid error");
 				}
 
-				execve("/bin/sh", NULL, NULL);
-				perror("Durr");
-				/*  check UID, see setuid(2) */
-				/*  start a shell, use execve(2) */
-
+				if (execve("/bin/sh", NULL, NULL) == -1) {
+					perror("execve error");
+				}
 			} else {
 				passwddata->pwfailed++;
 			}
