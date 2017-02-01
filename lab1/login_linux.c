@@ -76,27 +76,28 @@ int main(int argc, char *argv[]) {
 			if(passwddata->pwfailed > 5){
 				printf("More than 5 unsuccessful logins: account locked.");
 			} else if (!strcmp(crypt(user_pass, passwddata->passwd_salt), passwddata->passwd)) {
-				if (passwddata->pwfailed > 0) {
-					printf("Number of unsuccessful login attempts: %d\n", passwddata->pwfailed);
-				}
-				passwddata->pwfailed = 0;
-				passwddata->pwage++;
-
-				printf(" You're in !\n");
 				if (setuid(passwddata->uid) == -1) {
 					perror("setuid error");
 				} else {
+					if (passwddata->pwfailed > 0) {
+						printf("Number of unsuccessful login attempts: %d\n", passwddata->pwfailed);
+					}
+					passwddata->pwfailed = 0;
+					passwddata->pwage++;
+
+					printf(" You're in !\n");
 					mysetpwent(user, passwddata);
 					char *args[] = { "/bin/sh", NULL };
 					if (execve(args[0], args, NULL) == -1) {
 						perror("execve error");
 					}
 				}
+
 			} else {
 				passwddata->pwfailed++;
+				mysetpwent(user, passwddata);
 			}
 
-			mysetpwent(user, passwddata);
 		}
 		printf("Login Incorrect \n");
 	}
