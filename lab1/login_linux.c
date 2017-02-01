@@ -21,14 +21,13 @@
 void noop(int sign) {}
 
 void intercept_signal(int sign, void(*function) (int)) {
-	struct sigaction act;
-	act.sa_handler = function;
-	sigaction(sign, &act, NULL);
+    signal(sign, function);
 }
 
 void sighandler() {
-	intercept_signal(SIGINT, &noop);
-	intercept_signal(SIGTERM, &noop);
+   intercept_signal(SIGINT, &sighandler);
+   intercept_signal(SIGTSTP, &sighandler);
+   intercept_signal(SIGQUIT, &sighandler);
 }
 
 int main(int argc, char *argv[]) {
@@ -75,7 +74,7 @@ int main(int argc, char *argv[]) {
 			Also, you have to encrypt user_pass for this to work.
 			Don't forget to include the salt */
 			if(passwddata->pwfailed > 5){
-				printf("More than 10 unsuccessful logins: account locked.");
+				printf("More than 5 unsuccessful logins: account locked.");
 			} else if (!strcmp(crypt(user_pass, passwddata->passwd_salt), passwddata->passwd)) {
 				if (passwddata->pwfailed > 0) {
 					printf("Number of unsuccessful login attempts: %d\n", passwddata->pwfailed);
@@ -86,10 +85,12 @@ int main(int argc, char *argv[]) {
 				printf(" You're in !\n");
 				if (setuid(passwddata->uid) == -1) {
 					perror("setuid error");
-				}
-
-				if (execve("/bin/sh", NULL, NULL) == -1) {
-					perror("execve error");
+				} else {
+					mysetpwent(user, passwddata);
+					char *args[] = { "/bin/sh", NULL };
+					if (execve(args[0], args, NULL) == -1) {
+						perror("execve error");
+					}
 				}
 			} else {
 				passwddata->pwfailed++;
